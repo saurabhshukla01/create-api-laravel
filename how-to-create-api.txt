@@ -1,0 +1,670 @@
+Source code : https://github.com/saurabhshukla01/create-api-laravel
+
+How to Use Sanctum Api in Laravel source code and Steps :
+source code : https://github.com/anil-sidhu/laravel-sanctum
+
+Important link : https://www.youtube.com/watch?v=YezK2GGzX-0
+
+link 2 : https://www.youtube.com/watch?v=UKSQdg1uPbQ
+link 3 : https://www.youtube.com/watch?v=5411bR2jtM4
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Command Uses here this work is completed :
+
+used Command :
+
+composer create-project --prefer-dist laravel/laravel CreateApi
+cd CreateApi
+php artisan make:controller UserApi
+php artisan make:model User
+php artisan make:model UserApi
+php artisan make:migration create_usersapi_table
+php artisan migrate
+php artisan serve
+php artisan make:controller UserData
+php artisan serve
+$ composer require laravel/ui
+composer require laravel/ui
+php artisan ui bootstrap
+npm install && npm run dev
+npm install
+npm audit
+composer require laravel/passport
+php artisan migrate
+php artisan passport:install
+php artisan make:controller API\UserController
+php artisan serve
+doskey /history
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+_____________________________________________________________
+
+1) How to create Api step in php
+=====================================
+
+First create project command
+after create database 
+after create new table using migration 
+after that create model & controller
+define methods in controller and after that model mention table name
+insert some data in table column values required.
+After define the routes in Api.php inside route folder 
+After run this route :
+like this type : 
+
+It is a get api :
+url is : http://127.0.0.1:8000/api/user-list
+
+***********************************************
+
+
+code here :
+
+Controller/UserData.php
+***********************
+
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\UserApi;
+
+class UserData extends Controller
+{
+    function userList(){
+    	return UserApi::all();
+    }
+}
+
+
+model/UserApi.php
+*****************
+
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class UserApi extends Model
+{
+	protected $table = 'usersapi';
+}
+
+
+Route/api.php
+*************
+
+Route::get('user-list','UserData@userList');
+
+
+Url hit data :
+url is : http://127.0.0.1:8000/api/user-list
+
+Step by Step You are created Get Api after you check with Postman api data in json format or another like it , seem to be good.
+
+___________________________________________________________________________
+
+
+**************  How To authenticate In Api in Laravel 7.0   ***************
+
+Source code :  https://github.com/anil-sidhu/laravel-passport-poc
+__________________________________________________________________
+
+Laravel passport
+What is Passport? APIs typically use tokens to authenticate users and do not maintain session state between requests. Laravel makes API authentication a breeze using Laravel Passport, which provides a full OAuth2 server implementation for your Laravel application development in a matter of minutes.
+
+You have to just follow a few steps to get following web services
+Login API
+Register API
+Details API
+Getting Started
+Step 1: Install Package
+composer require laravel/passport
+
+open config/app.php file and add service provider.
+config/app.php
+'providers' =>[
+Laravel\Passport\PassportServiceProvider::class,
+],
+Step 2: Run Migration and Install
+php artisan migrate
+php artisan passport:install
+Step 3: Passport Configuration app/User.php
+<?php
+namespace App;
+use Laravel\Passport\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+class User extends Authenticatable
+{
+  use HasApiTokens, Notifiable;
+/**
+* The attributes that are mass assignable.
+*
+* @var array
+*/
+protected $fillable = [
+'name', 'email', 'password',
+];
+/**
+* The attributes that should be hidden for arrays.
+*
+* @var array
+*/
+protected $hidden = [
+'password', 'remember_token',
+];
+}
+app/Providers/AuthServiceProvider.php
+<?php
+namespace App\Providers;
+use Laravel\Passport\Passport; 
+use Illuminate\Support\Facades\Gate; 
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+class AuthServiceProvider extends ServiceProvider 
+{ 
+    /** 
+     * The policy mappings for the application. 
+     * 
+     * @var array 
+     */ 
+    protected $policies = [ 
+        'App\Model' => 'App\Policies\ModelPolicy', 
+    ];
+/** 
+     * Register any authentication / authorization services. 
+     * 
+     * @return void 
+     */ 
+    public function boot() 
+    { 
+        $this->registerPolicies(); 
+        Passport::routes(); 
+    } 
+}
+Step 4 :config/auth.php
+<?php
+return [
+'guards' => [ 
+        'web' => [ 
+            'driver' => 'session', 
+            'provider' => 'users', 
+        ], 
+        'api' => [ 
+            'driver' => 'passport', 
+            'provider' => 'users', 
+        ], 
+    ],
+Step 5: Create API Route
+<?php
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| is assigned the "api" middleware group. Enjoy building your API!
+|
+*/
+Route::post('login', 'API\UserController@login');
+Route::post('register', 'API\UserController@register');
+Route::group(['middleware' => 'auth:api'], function(){
+Route::post('details', 'API\UserController@details');
+});
+Step 6: Create the Controller
+<?php
+namespace App\Http\Controllers\API;
+use Illuminate\Http\Request; 
+use App\Http\Controllers\Controller; 
+use App\User; 
+use Illuminate\Support\Facades\Auth; 
+use Validator;
+class UserController extends Controller 
+{
+public $successStatus = 200;
+/** 
+     * login api 
+     * 
+     * @return \Illuminate\Http\Response 
+     */ 
+    public function login(){ 
+        if(Auth::attempt(['email' => request('email'), 'password' => request('password')])){ 
+            $user = Auth::user(); 
+            $success['token'] =  $user->createToken('MyApp')-> accessToken; 
+            return response()->json(['success' => $success], $this-> successStatus); 
+        } 
+        else{ 
+            return response()->json(['error'=>'Unauthorised'], 401); 
+        } 
+    }
+/** 
+     * Register api 
+     * 
+     * @return \Illuminate\Http\Response 
+     */ 
+    public function register(Request $request) 
+    { 
+        $validator = Validator::make($request->all(), [ 
+            'name' => 'required', 
+            'email' => 'required|email', 
+            'password' => 'required', 
+            'c_password' => 'required|same:password', 
+        ]);
+if ($validator->fails()) { 
+            return response()->json(['error'=>$validator->errors()], 401);            
+        }
+$input = $request->all(); 
+        $input['password'] = bcrypt($input['password']); 
+        $user = User::create($input); 
+        $success['token'] =  $user->createToken('MyApp')-> accessToken; 
+        $success['name'] =  $user->name;
+return response()->json(['success'=>$success], $this-> successStatus); 
+    }
+/** 
+     * details api 
+     * 
+     * @return \Illuminate\Http\Response 
+     */ 
+    public function details() 
+    { 
+        $user = Auth::user(); 
+        return response()->json(['success' => $user], $this-> successStatus); 
+    } 
+}
+Step 7: Run
+php artisan serve
+
+
+******** end step by step coding create authenticate api data ********
+________________________________________________________________________
+
+Run All commands in Your Project :
+
+
+****************************************************************
+Genrate some scerect key :
+
+Encryption keys generated successfully.
+Personal access client created successfully.
+Client ID: 1
+Client secret: JcjHcEjkYLB9XdokAHWOmvnO6CvAKJJlXvwTAalL
+Password grant client created successfully.
+Client ID: 2
+Client secret: MXvG5I9Oqd9jnKpXW3HNMUCAcCcWecCJEtvP0t4O
+
+*****************************************************************
+
+How to check step :
+
+Api working fine or not :
+
+======================================
+
+Step 1 :
+
+http://127.0.0.1:8000/api/user-list
+
+hit by postman in get data : 
+
+Like that :
+
+++++++++++++++++++++++++++++++++++++++++++++++
+Get data this format : 
+
+[
+    {
+        "id": 1,
+        "name": "saurabh",
+        "email": "saurabh@gmail.com",
+        "dob": "2020-08-11",
+        "location": "Dehli",
+        "created_at": "2020-08-13T06:27:32.000000Z",
+        "updated_at": "2020-08-13T06:29:32.000000Z"
+    },
+    {
+        "id": 2,
+        "name": "Shubham",
+        "email": "shub@gmail.com",
+        "dob": "2020-08-02",
+        "location": "Noida",
+        "created_at": "2020-08-13T06:27:32.000000Z",
+        "updated_at": "2020-08-13T06:29:32.000000Z"
+    },
+    {
+        "id": 3,
+        "name": "Surbhi",
+        "email": "surbhi@gmail.com",
+        "dob": "2020-07-14",
+        "location": "Kanpur",
+        "created_at": "2020-08-13T06:28:27.000000Z",
+        "updated_at": "2020-08-13T06:29:32.000000Z"
+    },
+    {
+        "id": 4,
+        "name": "Vijay",
+        "email": "vijay@gmail.com",
+        "dob": "2020-08-03",
+        "location": "Unnao",
+        "created_at": "2020-08-13T06:28:27.000000Z",
+        "updated_at": "2020-08-13T06:29:32.000000Z"
+    }
+]
+
+++++++++++++++++++++++++++++++++++++++++++++++
+
+
+Now After Authentication Laravel Passport Library added :
+
+link : hit by method Post :
+
+http://127.0.0.1:8000/api/register
+
+Inside body (open form data ) :
+
+Pass data with key and Value :
+
+like :
+
+key         value
+name        abc
+email       abc@gmail.com
+password    12345678
+c_password  12345678
+
+
+After send click then 
+
+getting data :
+
+inside body (response in json and xml etc .)
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Am getting this data and inserted also be the database if you include in database table like users table inside create_api database .
+
+_____________________
+
+{
+    "success": {
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiNjE2NzE0ZmIyZmE5NDVmMDJiNzEzZmViMTM1YTQzODVjNGRlZTdjNTNhNDE1NjM3MDdiYzI5ZGJkNTI2YmQxY2RmMGRmZGZlYmYxZjg3MjQiLCJpYXQiOjE1OTczMTM2OTgsIm5iZiI6MTU5NzMxMzY5OCwiZXhwIjoxNjI4ODQ5Njk4LCJzdWIiOiIxIiwic2NvcGVzIjpbXX0.JXOCQpvMQjlAKVmgOgNvK0wKhTr6im1JLIBb2UslqpAa5AIb9xHhBaE22370oyFd50Lj_tvGC9RtynrX2WCV0S73BK0HPQU38w2VJezjAGvYsCFNjReJXiMqKW_amWlOdUC7WwHoY2txs76FmZSxInI-i-VlcgDpQN8kLb4WOu0S1_geo6Sj9rZFDFEYMbD6PvcOKGlZeJno6rwS010xluKIo4jOGKjBSOLTZBRkpeQKeDMXrrFoIV1a-BnkDMg-xYmx2iST7SPFpardkrsgeF1hthdMGjP5G2ueswUa30zE597FBTTR-Qjmh2bqr4QY06S1KR1Qw7lqlPfXfT9rrOGHbfl2ORgw2hmtm7BIBXrR58-82_vzW6Tta4WjpONZjBFiJXW1xn4usvKQtKzut1paeHjqsySFL8JPw03-DzI51zO5_Icly4ArbIHyNtpNPxh2JhQriqZ8-BuCJGyDedqvkngGP2WXdXs3w4ykOSadN3vJqUwlJirSmTeJ_SQfNrbq4__603-RCDcCshH2QNbgp07COeXuZ1_kj9KOyMoAVQOUegIZSbQruwpXx8aluIKpR2FbFVxTOH40JIla70qxj9OTPpLeHO-_kyAAzweNjTeGOXE0iRqUclXlkQIGwpdoXelHuXsLj6W8Z48BwlQc1w0yEL4TqxT7zgksLWI",
+        "name": "Saurabh shukla"
+    }
+}
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+Step 3 :
+
+Url is :
+
+http://127.0.0.1:8000/api/details 
+
+hit by post method and pass data in form data ( before set in header data inside body key and value pair )
+
+
+Key                    Value
+
+Authorization          Bearer (_token) when create in users table
+
+
+value of Authorization Key is :
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiNjE2NzE0ZmIyZmE5NDVmMDJiNzEzZmViMTM1YTQzODVjNGRlZTdjNTNhNDE1NjM3MDdiYzI5ZGJkNTI2YmQxY2RmMGRmZGZlYmYxZjg3MjQiLCJpYXQiOjE1OTczMTM2OTgsIm5iZiI6MTU5NzMxMzY5OCwiZXhwIjoxNjI4ODQ5Njk4LCJzdWIiOiIxIiwic2NvcGVzIjpbXX0.JXOCQpvMQjlAKVmgOgNvK0wKhTr6im1JLIBb2UslqpAa5AIb9xHhBaE22370oyFd50Lj_tvGC9RtynrX2WCV0S73BK0HPQU38w2VJezjAGvYsCFNjReJXiMqKW_amWlOdUC7WwHoY2txs76FmZSxInI-i-VlcgDpQN8kLb4WOu0S1_geo6Sj9rZFDFEYMbD6PvcOKGlZeJno6rwS010xluKIo4jOGKjBSOLTZBRkpeQKeDMXrrFoIV1a-BnkDMg-xYmx2iST7SPFpardkrsgeF1hthdMGjP5G2ueswUa30zE597FBTTR-Qjmh2bqr4QY06S1KR1Qw7lqlPfXfT9rrOGHbfl2ORgw2hmtm7BIBXrR58-82_vzW6Tta4WjpONZjBFiJXW1xn4usvKQtKzut1paeHjqsySFL8JPw03-DzI51zO5_Icly4ArbIHyNtpNPxh2JhQriqZ8-BuCJGyDedqvkngGP2WXdXs3w4ykOSadN3vJqUwlJirSmTeJ_SQfNrbq4__603-RCDcCshH2QNbgp07COeXuZ1_kj9KOyMoAVQOUegIZSbQruwpXx8aluIKpR2FbFVxTOH40JIla70qxj9OTPpLeHO-_kyAAzweNjTeGOXE0iRqUclXlkQIGwpdoXelHuXsLj6W8Z48BwlQc1w0yEL4TqxT7zgksLWI
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+After fill both value getting data details route 
+this type :
+
++++++++++++++++++++++++++++++++++++++
+
+Output is : 
+
+{
+    "success": {
+        "id": 1,
+        "name": "Saurabh shukla",
+        "email": "saurabh@gmail.com",
+        "email_verified_at": null,
+        "created_at": "2020-08-13T10:14:57.000000Z",
+        "updated_at": "2020-08-13T10:14:57.000000Z"
+    }
+}
+
++++++++++++++++++++++++++++++++++++++
+
+Fouths Steps : 
+
+Login Routes : 
+
+http://127.0.0.1:8000/api/login
+
+inside (body in form-data )
+pass two key and values here (same as reigster url)
+
+Like :  
+
+key        value
+email      abc@gmail.com
+password   12345678
+
+
+After fill data and post data in hit by login url 
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Output is :
+
+{
+    "success": {
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiNzljYmEyY2Q0NWUyNzFmNTBiZjFjODYxYThmYTQzNTg1OTlhMjkzOTUxYWUzMmRkMWIwMWY2MjI5YjIwN2JjOWYwNzg0MWQxMzFlMDE0NTAiLCJpYXQiOjE1OTczMTQ2ODYsIm5iZiI6MTU5NzMxNDY4NiwiZXhwIjoxNjI4ODUwNjg2LCJzdWIiOiIxIiwic2NvcGVzIjpbXX0.RX6fLp7I8BPXmSvhQKP0DR1b-fhsDnzxj-8VkenEeVyO_bBO_09eoVK954BOIi7UUK6dReLVU_iPxM89ymmwfZzgNYZJKUcu2SVUvTUa6odJjuR7OURM7FHD9jafc3KYAzsdccnS8EifDGtuhgYU6NfmP-6lt4rVaZnkIB_QZWiUx0l0vWYVhXyfGmKQlu_pzvvLmpLGjBitfFwSxugr0XLXDKFOBsClab_Gmz28mHH4OER34WEzzp69v1dz79TQj0Vv0CWaB3EbQ12ZNl5jKgEi7M96iaiS0waYXir4ykQYSR-NwIT2x9oRpo3KNDG2tUtQkkWD3KlSA4zqrDKwbjjLv8LRZ5vzahvXjkHDp6HPh13Wno0EvVTGO8hGPwTBgsHfV36SMKeXf1nKXUbZUvGybIQpEB9XaroAdPGN0MATRwaznaxgedQZYvqbkfiTmswg5VtGA0iclBzNkz1LKmApL4WfpXmmRkDV7XPAam6OQg9VMG-dJsbGA_amVC7-PqoGCcAmXPWgcDjejIJaIhGJ9kEUo6CiyGyZ94Lt_bAooGq7jm65CoYS_U6Mo17q7zFkNab03pp7rHzFQ5D_NJDYzDRJbMTabc8_TRgK9sjBmIvw9YJDnfXtJPxJAF6gUqJAbc1UjxDdteE4tjf8nLJhqLXZqQUrATxcTCcdv7U"
+    }
+}
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+###########################################################
+
+How to solve :
+
+resolve Cors issue | Allow Access-Control-Allow-Origin
+
+Solution :
+
+make middleware first 
+
+using : command
+
+#cmd : php artisan make:middleware Cors
+
+kernel.php file :
+
+************************
+some code here :
+
+    protected $middleware = [
+        \App\Http\Middleware\Cors::class,
+    ];
+
+************************
+
+Open middleware/Cors.php 
+*************************
+
+Some changes in your middleware file :
+
+code : 
+
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+
+class Cors
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @return mixed
+     */
+    public function handle($request, Closure $next)
+    {
+        return $next($request)
+        ->header('Access-Control-Allow-Origin',"*")
+        ->header('Access-Control-Allow-Methods',"GET,POST,PUT,DELETE,OPTIONS")
+        ->header('Access-Control-Allow-Headers',"Accept,Authorization,Content-Type");
+    }
+}
+
+
+********************************
+
+after complete this code you frontend also be created easly.
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+**************************************************************
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+How to Create sanctum | with API example In laravel 7.0 
+
+*********************************************************
+
+
+
+steps here :
+
+
+Laravel Sanctum
+What is Laravel Sanctum ? Laravel Sanctum provides a featherweight authentication system for SPAs (single page applications), mobile applications, and simple, token based APIs. Sanctum allows each user of your application to generate multiple API tokens for their account. These tokens may be granted abilities / scopes which specify which actions the tokens are allowed to perform..
+
+You have to just follow a few steps to get following web services
+Login API
+Details API
+Getting Started
+Step 1: setup database in .env file
+DB_DATABASE=youtube
+DB_USERNAME=root
+DB_PASSWORD= redhat@123
+Step 2:Install Laravel Sanctum.
+composer require laravel/sanctum
+Step 3:Publish the Sanctum configuration and migration files .
+php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+
+Step 4:Run your database migrations.
+php artisan migrate
+
+Step 5:Add the Sanctum's middleware.
+../app/Http/Kernel.php
+
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+
+...
+
+    protected $middlewareGroups = [
+        ...
+
+        'api' => [
+            EnsureFrontendRequestsAreStateful::class,
+            'throttle:60,1',
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ],
+    ];
+
+    ...
+],
+
+Step 6:To use tokens for users.
+use Laravel\Sanctum\HasApiTokens;
+
+class User extends Authenticatable
+{
+    use HasApiTokens, Notifiable;
+}
+
+Step 7:Let's create the seeder for the User model
+php artisan make:seeder UsersTableSeeder
+Step 8:Now let's insert as record
+DB::table('users')->insert([
+    'name' => 'John Doe',
+    'email' => 'john@doe.com',
+    'password' => Hash::make('password')
+]);
+Step 9:To seed users table with user
+php artisan db:seed --class=UsersTableSeeder
+Step 10: create a controller nad /login route in the routes/api.php file:
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\User;
+use Illuminate\Support\Facades\Hash;
+class UserController extends Controller
+{
+    // 
+
+    function index(Request $request)
+    {
+        $user= User::where('email', $request->email)->first();
+        // print_r($data);
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                return response([
+                    'message' => ['These credentials do not match our records.']
+                ], 404);
+            }
+        
+             $token = $user->createToken('my-app-token')->plainTextToken;
+        
+            $response = [
+                'user' => $user,
+                'token' => $token
+            ];
+        
+             return response($response, 201);
+    }
+}
+Step 11: Test with postman, Result will be below
+{
+    "user": {
+        "id": 1,
+        "name": "John Doe",
+        "email": "john@doe.com",
+        "email_verified_at": null,
+        "created_at": null,
+        "updated_at": null
+    },
+    "token": "AbQzDgXa..."
+}
+Step 11: Make Details API or any other with secure route
+Route::middleware('auth:sanctum')->get('/user', function () {
+   //controller path 
+});
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+Used Step and Create this is easy to us.
+
+**********************************************************
+
+ 
+
+
+
+
+
+
+
+
